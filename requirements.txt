@@ -4,3 +4,4 @@ seaborn
 dill
 scikit-learn
 flask
+catboost
