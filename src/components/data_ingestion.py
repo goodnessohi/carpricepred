@@ -58,8 +58,3 @@ class DataIngestion:
             logging.error('Error occurred in data ingestion config')
             raise CustomException(e, sys)
 
-if __name__ == '__main__':
-    obj = DataIngestion()
-    print(obj.ingestion_config)
-    print(os.path.exists('artifacts'))  # Check if the 'artifacts' directory exists
-    obj.initiate_data_ingestion()  # Call the data ingestion method
