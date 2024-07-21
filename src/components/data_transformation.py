@@ -32,7 +32,7 @@ class DataTransformation:
             
             num_pipeline = Pipeline(
                 steps=[
-                    ("imputer", SimpleImputer(strategy="median")),
+                    ("imputer", SimpleImputer(strategy="most_frequent")),
                     ("scaler", StandardScaler(with_mean=False))
                 ]
             )
@@ -63,6 +63,7 @@ class DataTransformation:
             train_df = pd.read_csv(train_path)
             test_df = pd.read_csv(test_path)
             logging.info(f'Read train and test data completed')
+            
 
             logging.info(f'Obtaining preprocessing object')
             preprocessing_obj = self.get_data_transformer_object()
@@ -75,31 +76,15 @@ class DataTransformation:
             target_feature_train_df = train_df[target_column_name]
             target_feature_test_df = test_df[target_column_name]
             logging.info(f'Applying preprocessing object on training dataframe and testing dataframe')
+            logging.info(f"Shape of input_feature_train_df after separation: {input_feature_train_df.shape}")
+            logging.info(f"Shape of target_feature_train_df after separation: {target_feature_train_df.shape}")
+            logging.info(f"Shape of input_feature_test_df after separation: {input_feature_test_df.shape}")
+            logging.info(f"Shape of target_feature_test_df after separation: {target_feature_test_df.shape}")
 
             input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df)
             input_feature_test_arr = preprocessing_obj.transform(input_feature_test_df)
-
-            # Ensure target features are reshaped correctly
-            target_feature_train_df = target_feature_train_df.values.reshape(-1, 1)
-            target_feature_test_df = target_feature_test_df.values.reshape(-1, 1)
-
-            # Debug statements to check array shapes
-            logging.info(f"Shape of input_feature_train_arr: {input_feature_train_arr.shape}")
-            logging.info(f"Shape of target_feature_train_df: {target_feature_train_df.shape}")
-            logging.info(f"Shape of input_feature_test_arr: {input_feature_test_arr.shape}")
-            logging.info(f"Shape of target_feature_test_df: {target_feature_test_df.shape}")
-
-            # Ensure input_feature_train_arr and target_feature_train_df have compatible shapes
-            assert input_feature_train_arr.shape[0] == target_feature_train_df.shape[0], \
-                f"Mismatch in number of samples for training data: {input_feature_train_arr.shape[0]} vs {target_feature_train_df.shape[0]}"
-            assert input_feature_test_arr.shape[0] == target_feature_test_df.shape[0], \
-                f"Mismatch in number of samples for test data: {input_feature_test_arr.shape[0]} vs {target_feature_test_df.shape[0]}"
-
-            # Concatenate input features and target features
-            train_arr = np.c_[input_feature_train_arr, target_feature_train_df]
-            test_arr = np.c_[input_feature_test_arr, target_feature_test_df]
-
-            logging.info(f"Concatenation successful: Shape of train array: {train_arr.shape}, shape of test array: {test_arr.shape}")
+            logging.info(f"Shape of input_feature_train_arr after transform: {input_feature_train_arr.shape}")
+            logging.info(f"Shape of input_feature_test_arr after transform: {input_feature_test_arr.shape}")
 
             logging.info(f"Saving preprocessing object...")
             save_obj(
@@ -109,8 +94,10 @@ class DataTransformation:
             logging.info(f"Applied preprocessing object on training and testing datasets.")    
 
             return (
-                train_arr,
-                test_arr,
+                input_feature_train_arr,
+                target_feature_train_df.values,
+                input_feature_test_arr,
+                target_feature_test_df.values,
                 self.data_transformation_config.preprocessor_obj_file_path,
             )
 
@@ -124,7 +111,7 @@ if __name__ == "__main__":
         data_transformation = DataTransformation()
         train_data_path = 'path_to_train_data.csv'  # Update with actual path
         test_data_path = 'path_to_test_data.csv'    # Update with actual path
-        train_data, test_data, preprocessor_path = data_transformation.initiate_data_transformation(train_data_path, test_data_path)
+        input_feature_train_arr, target_feature_train_arr, input_feature_test_arr, target_feature_test_arr, preprocessor_path = data_transformation.initiate_data_transformation(train_data_path, test_data_path)
         logging.info(f"Data transformation completed. Preprocessor saved at: {preprocessor_path}")
     except Exception as e:
         logging.error(f"An error occurred: {str(e)}")
