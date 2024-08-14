@@ -69,7 +69,7 @@ if __name__ == '__main__':
     train_data, test_data = obj.initiate_data_ingestion()
 
     data_transformation = DataTransformation()
-    train_arr, test_arr, *additional_values =  data_transformation.initiate_data_transformation(train_data, test_data)
-
+    train_arr, test_arr, y_train, y_test, preprocessor_obj_file_path = data_transformation.initiate_data_transformation(train_data, test_data)
+    
     model_trainer = ModelTrainer()
-    print(model_trainer.initiate_model_trainer(train_arr, test_arr))
+    model_trainer.initiate_model_training(train_arr, test_arr, y_train, y_test, preprocessor_obj_file_path)

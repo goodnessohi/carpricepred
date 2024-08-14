@@ -27,15 +27,16 @@ class ModelTrainer:
     def __init__(self):
         self.model_trainer_config = ModelTrainerConfig()
 
-    def initiate_model_trainer(self, train_arr, test_arr):
+    def initiate_model_training(self, train_arr, test_arr, y_train, y_test, preprocessor_obj_file_path):
         try:
-            logging.info('Splitting train and test data')
-            X_train, y_train, X_test, y_test = (
-            train_arr[:, :-1],
-            train_arr[:, -1],
-            test_arr[:, :-1],
-            test_arr[:, -1]
-            )
+            logging.info('Data training initiated')
+            X_train, X_test = train_arr, test_arr
+
+            # Print the shapes to debug
+            logging.info(f"X_train shape: {X_train.shape}")
+            logging.info(f"y_train shape: {y_train.shape}")
+            logging.info(f"X_test shape: {X_test.shape}")
+            logging.info(f"y_test shape: {y_test.shape}")
 
             models = {
             "Linear Regression": LinearRegression(),

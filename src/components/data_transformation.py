@@ -28,13 +28,13 @@ class DataTransformation:
         try:
             # Define numerical and categorical columns
             numerical_columns = ['year', 'km_driven', 'mileage', 'engine', 'seats', 'max_power']
-            categorical_columns = ['fuel', 'seller_type', 'transmission', 'owner',  'brand']
+            categorical_columns = ['fuel', 'seller_type', 'transmission', 'owner', 'brand']
             logging.info('Loaded the categorical and numerical columns into the respective variables')
             
             # Pipeline for numerical features
             num_pipeline = Pipeline(
                 steps=[
-                    ("imputer", SimpleImputer(strategy="mean")),  # Use mean for imputation
+                    ("imputer", SimpleImputer(strategy="most_frequent")),  # Use most frequent for imputation
                     ("scaler", StandardScaler(with_mean=False))
                 ]
             )
@@ -65,10 +65,8 @@ class DataTransformation:
         """
         Cleans and converts the specified column to float.
         """
-        # Define a custom function to extract numeric values
         def extract_numeric(value):
             if isinstance(value, str):
-                # Remove any non-numeric characters, retain only the number
                 cleaned_value = ''.join(c for c in value if c.isdigit() or c == '.')
                 return float(cleaned_value) if cleaned_value else np.nan
             elif isinstance(value, (int, float)):
@@ -76,10 +74,7 @@ class DataTransformation:
             else:
                 return np.nan
 
-        # Apply the function to the column
         df[column_name] = df[column_name].apply(extract_numeric)
-
-        # Log after cleaning
         logging.info(f"Cleaned non-numeric values in column: {column_name}")
         return df
 
@@ -129,33 +124,39 @@ class DataTransformation:
             if target_column_name not in test_df.columns:
                 raise CustomException(f"Target column '{target_column_name}' not found in test data", sys)
 
-            input_feature_train_df = train_df.drop(columns=[target_column_name], axis=1)
-            input_feature_test_df = test_df.drop(columns=[target_column_name], axis=1)
-            target_feature_train_df = train_df[[target_column_name]]
-            target_feature_test_df = test_df[[target_column_name]]
+            X_train = train_df.drop(columns=[target_column_name], axis=1)
+            X_test = test_df.drop(columns=[target_column_name], axis=1)
+            y_train = train_df[[target_column_name]]
+            y_test = test_df[[target_column_name]]
 
             # Obtain preprocessing object
             preprocessing_obj = self.get_data_transformer_object()
 
             # Apply preprocessing
             logging.info(f"Applying preprocessing object on training dataframe and testing dataframe")
-            input_feature_train_arr = preprocessing_obj.fit_transform(input_feature_train_df)
-            input_feature_test_arr = preprocessing_obj.transform(input_feature_test_df)
+            X_train_transformed = preprocessing_obj.fit_transform(X_train)
+            X_test_transformed = preprocessing_obj.transform(X_test)
 
             # Verify if any data still contains NaNs or wrong types
             try:
-                logging.info(f"NaN values in input_feature_train_arr: {np.isnan(input_feature_train_arr).any()}")
-                logging.info(f"NaN values in target_feature_train_df values: {np.isnan(target_feature_train_df.values).any()}")
-                logging.info(f"NaN values in input_feature_test_arr: {np.isnan(input_feature_test_arr).any()}")
-                logging.info(f"NaN values in target_feature_test_df values: {np.isnan(target_feature_test_df.values).any()}")
+                logging.info(f"Data type of X_train_transformed: {X_train_transformed.dtype}")
+                logging.info(f"Data type of y_train: {y_train.dtypes}")
+                logging.info(f"Data type of X_test_transformed: {X_test_transformed.dtype}")
+                logging.info(f"Data type of y_test: {y_test.dtypes}")
+                
+                if np.issubdtype(X_train_transformed.dtype, np.number):
+                    logging.info(f"NaN values in X_train_transformed: {np.isnan(X_train_transformed).any()}")
+                
+                if np.issubdtype(y_train.values.dtype, np.number):
+                    logging.info(f"NaN values in y_train: {np.isnan(y_train.values).any()}")
+                
+                if np.issubdtype(X_test_transformed.dtype, np.number):
+                    logging.info(f"NaN values in X_test_transformed: {np.isnan(X_test_transformed).any()}")
+                
+                if np.issubdtype(y_test.values.dtype, np.number):
+                    logging.info(f"NaN values in y_test: {np.isnan(y_test.values).any()}")
             except TypeError as e:
                 logging.error(f"TypeError during NaN check: {e}")
-
-            # Concatenate train array with target column
-            train_arr = np.concatenate((input_feature_train_arr, target_feature_train_df.values.reshape(-1, 1)), axis=1)
-
-            # Concatenate test array with target column
-            test_arr = np.concatenate((input_feature_test_arr, target_feature_test_df.values.reshape(-1, 1)), axis=1)
 
             # Save the preprocessor object
             logging.info(f"Saving preprocessing object...")
@@ -166,8 +167,11 @@ class DataTransformation:
             logging.info(f"Applied preprocessing object on training and testing datasets.")    
             
             return (
-                train_arr,
-                test_arr,
+                X_train_transformed,
+                X_test_transformed,
+                y_train.values,
+                
+                y_test.values,
                 self.data_transformation_config.preprocessor_obj_file_path,
             )
 
@@ -181,7 +185,7 @@ if __name__ == "__main__":
     data_transformation = DataTransformation()
 
     try:
-        train_arr, test_arr, preprocessor_path = data_transformation.initiate_data_transformation(train_data_path, test_data_path)
+        X_train, y_train, X_test, y_test, preprocessor_path = data_transformation.initiate_data_transformation(train_data_path, test_data_path)
         logging.info(f"Data transformation completed. Preprocessor saved at {preprocessor_path}")
     except CustomException as ce:
         logging.error(f"Data transformation failed: {str(ce)}")
