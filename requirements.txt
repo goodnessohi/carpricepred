@@ -3,5 +3,6 @@ numpy
 seaborn
 dill
 scikit-learn
-flask
+streamlit
 catboost
+flask
