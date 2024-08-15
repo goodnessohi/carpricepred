@@ -1,20 +1,18 @@
 import os
 import sys
 from dataclasses import dataclass
-#Modelling
+# Modelling
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor,AdaBoostRegressor
+from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor
 from sklearn.svm import SVR
-from sklearn.linear_model import LinearRegression, Ridge,Lasso
-from sklearn.metrics import r2_score, mean_absolute_error, mean_squared_error
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
 from catboost import CatBoostRegressor
 from xgboost import XGBRegressor
 import warnings
-#Metrics
+# Metrics
 from src.exception import CustomException
 from src.logger import logging
 from src.utils import save_obj, evaluate_models
@@ -39,16 +37,16 @@ class ModelTrainer:
             logging.info(f"y_test shape: {y_test.shape}")
 
             models = {
-            "Linear Regression": LinearRegression(),
-            "Lasso": Lasso(),
-            "Ridge": Ridge(),
-            "K-Neighbors Regressor": KNeighborsRegressor(),
-            "Decision Tree": DecisionTreeRegressor(),
-            "Random Forest Regressor": RandomForestRegressor(),
-            "XGBRegressor": XGBRegressor(), 
-            "CatBoosting Regressor": CatBoostRegressor(verbose=False),
-            "AdaBoost Regressor": AdaBoostRegressor()
-        }
+                "Linear Regression": LinearRegression(),
+                "Lasso": Lasso(),
+                "Ridge": Ridge(),
+                "K-Neighbors Regressor": KNeighborsRegressor(),
+                "Decision Tree": DecisionTreeRegressor(),
+                "Random Forest Regressor": RandomForestRegressor(),
+                "XGBRegressor": XGBRegressor(), 
+                "CatBoosting Regressor": CatBoostRegressor(verbose=False),
+                "AdaBoost Regressor": AdaBoostRegressor()
+            }
             
             params = {
                 "Linear Regression": {},
@@ -61,6 +59,7 @@ class ModelTrainer:
                 "CatBoosting Regressor": {"iterations": [100, 200], "depth": [6, 8, 10]},
                 "AdaBoost Regressor": {"n_estimators": [50, 100], "learning_rate": [0.01, 0.1, 1.0]}
             }
+            
             best_models = {}
             best_params = {}
             for model_name in models:
@@ -71,16 +70,15 @@ class ModelTrainer:
                 best_params[model_name] = grid_search.best_params_
                 logging.info(f'Best hyperparameters for {model_name}: {grid_search.best_params_}')
 
-            
-            model_report = evaluate_models(X_train, y_train, X_test,y_test, best_models)
+            model_report = evaluate_models(X_train, y_train, X_test, y_test, best_models)
             logging.info('Model evaluation is completed.')
 
-            #Get model score
+            # Get model score
             best_model_score = max(model_report.values())
             logging.info('Best model score has been obtained')
 
-            #Get best model from dictionary
-            best_model_name = max (model_report, key= model_report.get)
+            # Get best model from dictionary
+            best_model_name = max(model_report, key=model_report.get)
             best_model = best_models[best_model_name]
             best_hyperparameters = best_params[best_model_name]
 
@@ -88,17 +86,22 @@ class ModelTrainer:
                 raise CustomException(f"No best model as the model scores are less than 60%")
             logging.info(f'Best model found on training and test datasets')
 
-            #Print best hyperparams
-            logging.info(f'Best hyperparamters for the best model {best_model_name} and the hyperparameter is : {best_hyperparameters}')
+            # Print best hyperparams
+            logging.info(f'Best hyperparameters for the best model {best_model_name}: {best_hyperparameters}')
 
             save_obj(
-                file_path= self.model_trainer_config.trained_model_file_path,
+                file_path=self.model_trainer_config.trained_model_file_path,
                 obj=best_model
             )
+
             predicted = best_model.predict(X_test)
             r2_square = r2_score(y_test, predicted)
             logging.info('Trained model is used to make predictions on test data.')
+
+            # Log the R² score of the best model
+            logging.info(f'R² score of the best model ({best_model_name}): {r2_square}')
+
             return r2_square
+
         except Exception as e:
             raise CustomException(str(e))
-    
