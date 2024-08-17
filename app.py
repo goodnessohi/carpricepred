@@ -60,3 +60,6 @@ if st.button("Submit"):
     st.write("Prediction:")
     st.write(predicted_price)
 
+if st.button('Stop App'):
+    st.stop()
+

@@ -1,8 +1,8 @@
-pandas
-numpy
-seaborn
-dill
-scikit-learn
-streamlit
-catboost
-flask
+pandas==1.5.3
+numpy==1.23.5
+seaborn==0.12.2
+dill==0.3.6
+scikit-learn==1.2.2
+streamlit==1.25.0
+catboost==1.1.1
+flask==2.2.5
