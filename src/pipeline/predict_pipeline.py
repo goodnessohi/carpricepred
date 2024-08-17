@@ -70,5 +70,6 @@ class CustomData:
 
             return pd.DataFrame(custom_data_input_dict)
         except Exception as e:
+                print(f"Original error: {str(e)}")  # Log the original error
                 raise CustomException(e, sys)
 

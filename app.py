@@ -51,7 +51,7 @@ if st.button("Submit"):
         prediction = pipeline.predict(df)
 
     # Truncate decimal points and add dollar sign
-        predicted_price = "${:,.2f}".format(prediction[0])
+        predicted_price = "${:,.2f}".format(prediction[0] / 83.88)
 
     
     # Display the inputs and prediction
